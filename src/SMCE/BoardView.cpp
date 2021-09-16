@@ -362,6 +362,55 @@ bool FrameBuffer::read_rgb444(std::span<std::byte> buf) {
     return true;
 }
 
+// Implementation of rgb565
+
+bool FrameBuffer::write_rgb565(std::span<const std::byte> buf) {
+    if (!exists())
+        return false;
+
+    auto& frame_buf = m_bdat->frame_buffers[m_idx];
+    if (buf.size() != frame_buf.data.size() / 2)
+        return false;
+
+    [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
+
+    // Unsure what this does, will try to remove it if it does not work.
+    auto* to = frame_buf.data.data();
+
+    // Example used to convert to rgb565 http://www.barth-dev.de/about-rgb565-and-how-to-convert-into-it/#
+
+    for (std::byte from : buf) {
+        *to++ = (((from&0xf80000)>>8) + ((from&0xfc00)>>5) + ((from&0xf8)>>3));
+        
+        // Removed this because we were unsure if it was needed. Take it back if it crashes.
+        //*to++ = from << 4; // Might be a bug there in the case where we have an odd number of pixels in the frame
+    }
+
+    return true;
+}
+
+// This has not been edited from rgb444 yet. Only the above method has been edited.
+bool FrameBuffer::read_rgb565(std::span<std::byte> buf) {
+    if (!exists())
+        return false;
+
+    auto& frame_buf = m_bdat->frame_buffers[m_idx];
+    if (buf.size() != frame_buf.data.size())
+        return false;
+    [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
+
+    // Unsure what this does, will try to remove it if it does not work.
+    const auto* from = frame_buf.data.data();
+    
+    for (std::byte& to : buf) {
+        to = (from[0] & std::byte{0xF}) | (from[1] >> 4);
+        from += 2;
+    }
+
+    return true;
+}
+// End of implementation of RGB565
+
 FrameBuffer FrameBuffers::operator[](std::size_t key) noexcept {
     if (!m_bdat)
         return {m_bdat, 0};
