@@ -325,6 +325,8 @@ bool FrameBuffer::read_rgb888(std::span<std::byte> buf) {
     return true;
 }
 
+// buf has the RGB444 format
+// framebuffer always has RGB888 format
 bool FrameBuffer::write_rgb444(std::span<const std::byte> buf) {
     if (!exists())
         return false;
@@ -335,10 +337,14 @@ bool FrameBuffer::write_rgb444(std::span<const std::byte> buf) {
 
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
 
-    auto* to = frame_buf.data.data();
+    // to is a pointer to the frame buffer data (a long array of bytes, where every 4 bytes is one pixel)
+    std::byte* to = frame_buf.data.data();
+
+    // for each byte in the input, write two bytes to the buffer
     for (std::byte from : buf) {
-        *to++ = from & std::byte{0xF};
-        *to++ = from << 4; // Might be a bug there in the case where we have an odd number of pixels in the frame
+        // duplicate each 4 bits
+        *to++ = (from & (std::byte)0b11110000) | (from >> 4);
+        *to++ = (from << 4) | (from & (std::byte)0b00001111);
     }
 
     return true;
@@ -362,8 +368,7 @@ bool FrameBuffer::read_rgb444(std::span<std::byte> buf) {
     return true;
 }
 
-// Implementation of rgb565
-
+// Implementation of rgb565. conversion from RGB888 to RGB565
 bool FrameBuffer::write_rgb565(std::span<const std::byte> buf) {
     if (!exists())
         return false;
@@ -379,11 +384,16 @@ bool FrameBuffer::write_rgb565(std::span<const std::byte> buf) {
 
     // Example used to convert to rgb565 http://www.barth-dev.de/about-rgb565-and-how-to-convert-into-it/#
 
-    for (std::byte from : buf) {
-        *to++ = (((from&0xf80000)>>8) + ((from&0xfc00)>>5) + ((from&0xf8)>>3));
-        
-        // Removed this because we were unsure if it was needed. Take it back if it crashes.
-        //*to++ = from << 4; // Might be a bug there in the case where we have an odd number of pixels in the frame
+    // read two bytes at the time
+    for (auto i = buf.begin(); i != buf.end(); ++i) {
+        std::byte left = *i++;
+        std::byte right = *i;
+
+        *to++ = (std::byte)0;                                 // unused
+        *to++ = (left & (std::byte)0b11111000) | (left >> 5); // red
+        *to++ = ((left & (std::byte)0b00000111) << 5) | ((right & (std::byte)0b11100000) >> 3) |
+                ((left & (std::byte)0b00000110) >> 1);              // green
+        *to++ = (right << 5) | ((right & (std::byte)0b11100) >> 2); // blue
     }
 
     return true;
@@ -401,7 +411,7 @@ bool FrameBuffer::read_rgb565(std::span<std::byte> buf) {
 
     // Unsure what this does, will try to remove it if it does not work.
     const auto* from = frame_buf.data.data();
-    
+
     for (std::byte& to : buf) {
         to = (from[0] & std::byte{0xF}) | (from[1] >> 4);
         from += 2;
