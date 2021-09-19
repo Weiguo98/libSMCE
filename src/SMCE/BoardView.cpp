@@ -350,18 +350,20 @@ bool FrameBuffer::write_rgb444(std::span<const std::byte> buf) {
     return true;
 }
 
+// read from the frame buffer (rgb888) into the buf (rgb444)
 bool FrameBuffer::read_rgb444(std::span<std::byte> buf) {
     if (!exists())
         return false;
 
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (buf.size() != frame_buf.data.size())
+    if (buf.size() != frame_buf.data.size() / 2) // buf is 1/2 of frame buf
         return false;
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
 
     const auto* from = frame_buf.data.data();
     for (std::byte& to : buf) {
-        to = (from[0] & std::byte{0xF}) | (from[1] >> 4);
+        // red, green and blue
+        to = (from[0] & std::byte{0xF0}) | (from[1] >> 4);
         from += 2;
     }
 
@@ -369,6 +371,7 @@ bool FrameBuffer::read_rgb444(std::span<std::byte> buf) {
 }
 
 // Implementation of rgb565. conversion from RGB888 to RGB565
+// missing TESTS
 bool FrameBuffer::write_rgb565(std::span<const std::byte> buf) {
     if (!exists())
         return false;
@@ -399,7 +402,8 @@ bool FrameBuffer::write_rgb565(std::span<const std::byte> buf) {
     return true;
 }
 
-// This has not been edited from rgb444 yet. Only the above method has been edited.
+// read from the frame buffer (rgb888) into the buf (rg565)
+// missing TESTS
 bool FrameBuffer::read_rgb565(std::span<std::byte> buf) {
     if (!exists())
         return false;
@@ -409,16 +413,26 @@ bool FrameBuffer::read_rgb565(std::span<std::byte> buf) {
         return false;
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
 
-    // Unsure what this does, will try to remove it if it does not work.
     const auto* from = frame_buf.data.data();
 
-    for (std::byte& to : buf) {
-        to = (from[0] & std::byte{0xF}) | (from[1] >> 4);
-        from += 2;
+    // read two bytes at the time
+    for (auto i = buf.begin(); i != buf.end(); ++i) {
+        // read red/green/blue
+        ++from; // skip unused byte
+
+        // pick values from the 32bits from frame buffer
+        std::byte red = *from++;
+        std::byte green = *from++;
+        std::byte blue = *from++;
+
+        // write to the target
+        *i++ = (red & (std::byte)0b11111000) | ((green & (std::byte)0b11100000) >> 5);
+        *i = ((green & (std::byte)0b00011100) << 3) | ((blue & (std::byte)0b11111000) >> 3);
     }
 
     return true;
 }
+
 // End of implementation of RGB565
 
 FrameBuffer FrameBuffers::operator[](std::size_t key) noexcept {
