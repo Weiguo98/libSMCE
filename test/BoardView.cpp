@@ -84,9 +84,10 @@ TEST_CASE("BoardView UART", "[BoardView]") {
         std::cerr << tc.build_log().second;
     REQUIRE_FALSE(ec);
     smce::Board br{};
-    REQUIRE(br.configure({.uart_channels = {{}}}));
+    REQUIRE(br.configure({.uart_channels = {{/* uart channel with default values */}}}));
     REQUIRE(br.attach_sketch(sk));
     REQUIRE(br.start());
+
     auto bv = br.view();
     REQUIRE(bv.valid());
     auto uart0 = bv.uart_channels[0];
@@ -127,4 +128,26 @@ TEST_CASE("BoardView UART", "[BoardView]") {
 #endif
 
     REQUIRE(br.stop());
+}
+
+// testing the RGB888 read/write functions
+TEST_CASE("BoardView FrameBuffer", "[BoardView]") {
+    smce::Toolchain tc{SMCE_PATH};
+    REQUIRE(!tc.check_suitable_environment());
+    smce::Sketch sk{SKETCHES_PATH "rgb888", {.fqbn = "arduino:avr:nano"}};
+    const auto ec = tc.compile(sk);
+    if (ec)
+        std::cerr << tc.build_log().second;
+    REQUIRE_FALSE(ec);
+    smce::Board br{}; // create new board
+    // create a frame buffer
+    REQUIRE(br.configure({.frame_buffers = {{.direction = smce::BoardConfig::FrameBuffer::Direction::in}}}));
+    REQUIRE(br.attach_sketch(sk));
+    REQUIRE(br.start());
+
+    auto bv = br.view();
+    REQUIRE(bv.valid());
+
+    // !!If adding a new file, rerun the cmake -S . -B build before running the tests
+    // TODO: write pixel to the fram buffer and try to read them back and check if the colors is the same.
 }
