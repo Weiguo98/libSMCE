@@ -131,6 +131,9 @@ TEST_CASE("BoardView UART", "[BoardView]") {
 }
 
 // testing the RGB888 read/write functions
+// try to use the Framebuffer GFX Arduino library in the .ino code - it supports RGB888 and RGB565.
+// https://www.arduino.cc/reference/en/libraries/framebuffer-gfx/
+// https://github.com/marcmerlin/Framebuffer_GFX
 TEST_CASE("BoardView FrameBuffer", "[BoardView]") {
     smce::Toolchain tc{SMCE_PATH};
     REQUIRE(!tc.check_suitable_environment());
