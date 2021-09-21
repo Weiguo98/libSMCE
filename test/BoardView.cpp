@@ -130,24 +130,100 @@ TEST_CASE("BoardView UART", "[BoardView]") {
     REQUIRE(br.stop());
 }
 
-// testing the RGB888 read/write functions
-TEST_CASE("BoardView FrameBuffer", "[BoardView]") {
-    smce::Toolchain tc{SMCE_PATH};
-    REQUIRE(!tc.check_suitable_environment());
-    smce::Sketch sk{SKETCHES_PATH "rgb888", {.fqbn = "arduino:avr:nano"}};
-    const auto ec = tc.compile(sk);
-    if (ec)
-        std::cerr << tc.build_log().second;
-    REQUIRE_FALSE(ec);
-    smce::Board br{}; // create new board
-    // create a frame buffer
-    REQUIRE(br.configure({.frame_buffers = {{.direction = smce::BoardConfig::FrameBuffer::Direction::in}}}));
-    REQUIRE(br.attach_sketch(sk));
-    REQUIRE(br.start());
+// testing the RGB444 write function
+TEST_CASE("BoardView FrameBufferRGB44", "[BoardView]") {
+    // set up
+    std::byte to[4];
+    std::byte black_bits[] = {(std::byte)0, (std::byte)0};
+    std::byte white_bits[] = {(std::byte)0xf, (std::byte)0xff};
+    std::byte red_bits[] = {(std::byte)0xf, (std::byte)0};
+    std::byte green_bits[] = {(std::byte)0, (std::byte)0xf0};
+    std::byte blue_bits[] = {(std::byte)0, (std::byte)0x0f};
+    std::byte brown_bits[] = {(std::byte)0x8, (std::byte)0x75};
+    std::byte purple_bits[] = {(std::byte)0xa, (std::byte)0x5c};
 
-    auto bv = br.view();
-    REQUIRE(bv.valid());
+    smce::convert_rgb444_to_rgb888(std::span{black_bits, 2}, to);
+    REQUIRE((int)to[1] == 0); // red
+    REQUIRE((int)to[2] == 0); // green
+    REQUIRE((int)to[3] == 0); // blue
 
-    // !!If adding a new file, rerun the cmake -S . -B build before running the tests
-    // TODO: write pixel to the fram buffer and try to read them back and check if the colors is the same.
+    smce::convert_rgb444_to_rgb888(std::span{white_bits, 2}, to);
+    REQUIRE((int)to[1] == 255); // red
+    REQUIRE((int)to[2] == 255); // green
+    REQUIRE((int)to[3] == 255); // blue
+
+    smce::convert_rgb444_to_rgb888(std::span{red_bits, 2}, to);
+    REQUIRE((int)to[1] == 255); // red
+    REQUIRE((int)to[2] == 0);   // green
+    REQUIRE((int)to[3] == 0);   // blue
+
+    smce::convert_rgb444_to_rgb888(std::span{green_bits, 2}, to);
+    REQUIRE((int)to[1] == 0);   // red
+    REQUIRE((int)to[2] == 255); // green
+    REQUIRE((int)to[3] == 0);   // blue
+
+    smce::convert_rgb444_to_rgb888(std::span{blue_bits, 2}, to);
+    REQUIRE((int)to[1] == 0);   // red
+    REQUIRE((int)to[2] == 0);   // green
+    REQUIRE((int)to[3] == 255); // blue
+
+    smce::convert_rgb444_to_rgb888(std::span{brown_bits, 2}, to);
+    REQUIRE((int)to[1] == 0x88); // red
+    REQUIRE((int)to[2] == 0x77); // green
+    REQUIRE((int)to[3] == 0x55); // blue
+
+    smce::convert_rgb444_to_rgb888(std::span{purple_bits, 2}, to);
+    REQUIRE((int)to[1] == 0xaa); // red
+    REQUIRE((int)to[2] == 0x55); // green
+    REQUIRE((int)to[3] == 0xcc); // blue
 }
+
+// testing the RGB565 write function
+TEST_CASE("BoardView FrameBufferRGB565", "[BoardView]") {
+    // set up
+    std::byte to[4];
+    std::byte black_bits[] = {(std::byte)0, (std::byte)0};
+    std::byte white_bits[] = {(std::byte)0xff, (std::byte)0xff};
+    std::byte red_bits[] = {(std::byte)0xf8, (std::byte)0x00};
+    std::byte green_bits[] = {(std::byte)0x07, (std::byte)0xe0};
+    std::byte blue_bits[] = {(std::byte)0, (std::byte)0x1f};
+    std::byte brown_bits[] = {(std::byte)0x93, (std::byte)0x66};
+    std::byte purple_bits[] = {(std::byte)0xa2, (std::byte)0x99};
+
+    smce::convert_rgb565_to_rgb888(std::span{black_bits, 2}, to);
+    REQUIRE((int)to[1] == 0); // red
+    REQUIRE((int)to[2] == 0); // green
+    REQUIRE((int)to[3] == 0); // blue
+
+    smce::convert_rgb565_to_rgb888(std::span{white_bits, 2}, to);
+    REQUIRE((int)to[1] == 255); // red
+    REQUIRE((int)to[2] == 255); // green
+    REQUIRE((int)to[3] == 255); // blue
+
+    smce::convert_rgb565_to_rgb888(std::span{red_bits, 2}, to);
+    REQUIRE((int)to[1] == 255); // red
+    REQUIRE((int)to[2] == 0);   // green
+    REQUIRE((int)to[3] == 0);   // blue
+
+    smce::convert_rgb565_to_rgb888(std::span{green_bits, 2}, to);
+    REQUIRE((int)to[1] == 0);   // red
+    REQUIRE((int)to[2] == 255); // green
+    REQUIRE((int)to[3] == 0);   // blue
+
+    smce::convert_rgb565_to_rgb888(std::span{blue_bits, 2}, to);
+    REQUIRE((int)to[1] == 0);   // red
+    REQUIRE((int)to[2] == 0);   // green
+    REQUIRE((int)to[3] == 255); // blue
+
+    smce::convert_rgb565_to_rgb888(std::span{brown_bits, 2}, to);
+    REQUIRE((int)to[1] == 0x94); // red
+    REQUIRE((int)to[2] == 0x6d); // green
+    REQUIRE((int)to[3] == 0x31); // blue
+
+    smce::convert_rgb565_to_rgb888(std::span{purple_bits, 2}, to);
+    REQUIRE((int)to[1] == 0xa5); // red
+    REQUIRE((int)to[2] == 0x51); // green
+    REQUIRE((int)to[3] == 0xce); // blue
+}
+
+// TODO test read functions
