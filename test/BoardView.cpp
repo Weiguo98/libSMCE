@@ -225,5 +225,3 @@ TEST_CASE("BoardView FrameBufferRGB565", "[BoardView]") {
     REQUIRE((int)to[2] == 0x51); // green
     REQUIRE((int)to[3] == 0xce); // blue
 }
-
-// TODO test read functions
