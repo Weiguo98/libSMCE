@@ -325,113 +325,117 @@ bool FrameBuffer::read_rgb888(std::span<std::byte> buf) {
     return true;
 }
 
-void convert_rgb444_to_rgb888(std::span<const std::byte> buf, std::byte* to) {
+void convert_rgb444_to_rgb888(std::span<const std::byte> source, std::byte* target) {
     // for each byte in the input, write two bytes to the buffer
-    for (std::byte from : buf) {
+    for (std::byte from : source) {
         // duplicate each 4 bits
-        *to++ = (from & (std::byte)0b11110000) | (from >> 4);
-        *to++ = (from << 4) | (from & (std::byte)0b00001111);
+        *target++ = (from & (std::byte)0b11110000) | (from >> 4);
+        *target++ = (from << 4) | (from & (std::byte)0b00001111);
     }
 }
 
 // buf has the RGB444 format
 // framebuffer always has RGB888 format
-bool FrameBuffer::write_rgb444(std::span<const std::byte> buf) {
+bool FrameBuffer::write_rgb444(std::span<const std::byte> source) {
     if (!exists())
         return false;
 
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (buf.size() != frame_buf.data.size() / 2)
+    if (source.size() != frame_buf.data.size() / 2)
         return false;
 
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
 
     // to is a pointer to the frame buffer data (a long array of bytes, where every 4 bytes is one pixel)
-    std::byte* to = frame_buf.data.data();
-    convert_rgb444_to_rgb888(buf, to);
+    std::byte* target = frame_buf.data.data();
+    convert_rgb444_to_rgb888(source, target);
     return true;
 }
 
+void convert_rgb888_to_rgb444(const std::byte* source, std::span<std::byte> target) {
+
+    for (std::byte& to : target) {
+        // red, green and blue
+        to = (source[0] & std::byte{0xF0}) | (source[1] >> 4);
+        source += 2;
+    }
+}
 // read from the frame buffer (rgb888) into the buf (rgb444)
-bool FrameBuffer::read_rgb444(std::span<std::byte> buf) {
+bool FrameBuffer::read_rgb444(std::span<std::byte> target) {
     if (!exists())
         return false;
 
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (buf.size() != frame_buf.data.size() / 2) // buf is 1/2 of frame buf
+    if (target.size() != frame_buf.data.size() / 2) // buf is 1/2 of frame buf
         return false;
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
 
-    const auto* from = frame_buf.data.data();
-    for (std::byte& to : buf) {
-        // red, green and blue
-        to = (from[0] & std::byte{0xF0}) | (from[1] >> 4);
-        from += 2;
-    }
-
+    const auto* source = frame_buf.data.data();
+    convert_rgb888_to_rgb444(source, target);
     return true;
 }
 
-void convert_rgb565_to_rgb888(std::span<const std::byte> buf, std::byte* to) {
+void convert_rgb565_to_rgb888(std::span<const std::byte> source, std::byte* target) {
     // read two bytes at the time
-    for (auto i = buf.begin(); i != buf.end(); ++i) {
+    for (auto i = source.begin(); i != source.end(); ++i) {
         std::byte left = *i++;
         std::byte right = *i;
 
-        *to++ = (std::byte)0;                                 // unused
-        *to++ = (left & (std::byte)0b11111000) | (left >> 5); // red
-        *to++ = ((left & (std::byte)0b00000111) << 5) | ((right & (std::byte)0b11100000) >> 3) |
-                ((left & (std::byte)0b00000110) >> 1);              // green
-        *to++ = (right << 3) | ((right & (std::byte)0b11100) >> 2); // blue
+        *target++ = (std::byte)0;                                 // unused
+        *target++ = (left & (std::byte)0b11111000) | (left >> 5); // red
+        *target++ = ((left & (std::byte)0b00000111) << 5) | ((right & (std::byte)0b11100000) >> 3) |
+                    ((left & (std::byte)0b00000110) >> 1);              // green
+        *target++ = (right << 3) | ((right & (std::byte)0b11100) >> 2); // blue
     }
 }
 // Implementation of rgb565. conversion from RGB888 to RGB565
-// missing TESTS
-bool FrameBuffer::write_rgb565(std::span<const std::byte> buf) {
+bool FrameBuffer::write_rgb565(std::span<const std::byte> source) {
     if (!exists())
         return false;
 
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (buf.size() != frame_buf.data.size() / 2)
+    if (source.size() != frame_buf.data.size() / 2)
         return false;
 
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
 
     // Unsure what this does, will try to remove it if it does not work.
-    auto* to = frame_buf.data.data();
+    auto* target = frame_buf.data.data();
 
     // Example used to convert to rgb565 http://www.barth-dev.de/about-rgb565-and-how-to-convert-into-it/#
-    convert_rgb565_to_rgb888(buf, to);
+    convert_rgb565_to_rgb888(source, target);
     return true;
 }
 
-// read from the frame buffer (rgb888) into the buf (rg565)
-// missing TESTS
-bool FrameBuffer::read_rgb565(std::span<std::byte> buf) {
-    if (!exists())
-        return false;
-
-    auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (buf.size() != frame_buf.data.size())
-        return false;
-    [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
-
-    const auto* from = frame_buf.data.data();
-
+void convert_rgb888_to_rgb565(const std::byte* source, std::span<std::byte> target) {
     // read two bytes at the time
-    for (auto i = buf.begin(); i != buf.end(); ++i) {
+    for (auto i = target.begin(); i != target.end(); ++i) {
         // read red/green/blue
-        ++from; // skip unused byte
+        ++source; // skip unused byte
 
         // pick values from the 32bits from frame buffer
-        std::byte red = *from++;
-        std::byte green = *from++;
-        std::byte blue = *from++;
+        std::byte red = *source++;
+        std::byte green = *source++;
+        std::byte blue = *source++;
 
         // write to the target
         *i++ = (red & (std::byte)0b11111000) | ((green & (std::byte)0b11100000) >> 5);
         *i = ((green & (std::byte)0b00011100) << 3) | ((blue & (std::byte)0b11111000) >> 3);
     }
+}
+
+// read from the frame buffer (rgb888) into the buf (rg565)
+bool FrameBuffer::read_rgb565(std::span<std::byte> target) {
+    if (!exists())
+        return false;
+
+    auto& frame_buf = m_bdat->frame_buffers[m_idx];
+    if (target.size() != frame_buf.data.size())
+        return false;
+    [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
+
+    const auto* source = frame_buf.data.data();
+    convert_rgb888_to_rgb565(source, target);
 
     return true;
 }
