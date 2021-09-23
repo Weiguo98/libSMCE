@@ -216,10 +216,10 @@ class SMCE_API FrameBuffer {
 };
 
 // helper function
-SMCE_API void convert_rgb444_to_rgb888(std::span<const std::byte, -1>, std::byte*);
-SMCE_API void convert_rgb565_to_rgb888(std::span<const std::byte, -1>, std::byte*);
-SMCE_API void convert_rgb888_to_rgb444(const std::byte*, std::span<std::byte, -1>);
-SMCE_API void convert_rgb888_to_rgb565(const std::byte*, std::span<std::byte, -1>);
+SMCE_API void convert_rgb444_to_rgb888(std::span<const std::byte>, std::byte*);
+SMCE_API void convert_rgb565_to_rgb888(std::span<const std::byte>, std::byte*);
+SMCE_API void convert_rgb888_to_rgb444(const std::byte*, std::span<std::byte>);
+SMCE_API void convert_rgb888_to_rgb565(const std::byte*, std::span<std::byte>);
 
 class SMCE_API FrameBuffers {
     friend BoardView;
