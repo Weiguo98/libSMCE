@@ -133,177 +133,177 @@ TEST_CASE("BoardView UART", "[BoardView]") {
 // testing the RGB444 write function
 TEST_CASE("BoardView FrameBuffer RGB444 Write", "[BoardView]") {
     // set up
-    std::byte target[4]; // target
+    std::byte target[3]; // target
     std::byte black_bits[] = {(std::byte)0, (std::byte)0};
-    std::byte white_bits[] = {(std::byte)0xf, (std::byte)0xff};
-    std::byte red_bits[] = {(std::byte)0xf, (std::byte)0};
-    std::byte green_bits[] = {(std::byte)0, (std::byte)0xf0};
-    std::byte blue_bits[] = {(std::byte)0, (std::byte)0x0f};
-    std::byte brown_bits[] = {(std::byte)0x8, (std::byte)0x75};
-    std::byte purple_bits[] = {(std::byte)0xa, (std::byte)0x5c};
+    std::byte white_bits[] = {(std::byte)0xff, (std::byte)0xf};
+    std::byte red_bits[] = {(std::byte)0, (std::byte)0xf};
+    std::byte green_bits[] = {(std::byte)0xf0, (std::byte)0};
+    std::byte blue_bits[] = {(std::byte)0x0f, (std::byte)0};
+    std::byte brown_bits[] = {(std::byte)0x75, (std::byte)0x8};
+    std::byte purple_bits[] = {(std::byte)0x5c, (std::byte)0xa};
 
     smce::convert_rgb444_to_rgb888(std::span{black_bits, 2}, target);
-    REQUIRE((int)target[1] == 0); // red
-    REQUIRE((int)target[2] == 0); // green
-    REQUIRE((int)target[3] == 0); // blue
+    REQUIRE((int)target[0] == 0); // red
+    REQUIRE((int)target[1] == 0); // green
+    REQUIRE((int)target[2] == 0); // blue
 
     smce::convert_rgb444_to_rgb888(std::span{white_bits, 2}, target);
-    REQUIRE((int)target[1] == 255); // red
-    REQUIRE((int)target[2] == 255); // green
-    REQUIRE((int)target[3] == 255); // blue
+    REQUIRE((int)target[0] == 255); // red
+    REQUIRE((int)target[1] == 255); // green
+    REQUIRE((int)target[2] == 255); // blue
 
     smce::convert_rgb444_to_rgb888(std::span{red_bits, 2}, target);
-    REQUIRE((int)target[1] == 255); // red
-    REQUIRE((int)target[2] == 0);   // green
-    REQUIRE((int)target[3] == 0);   // blue
+    REQUIRE((int)target[0] == 255); // red
+    REQUIRE((int)target[1] == 0);   // green
+    REQUIRE((int)target[2] == 0);   // blue
 
     smce::convert_rgb444_to_rgb888(std::span{green_bits, 2}, target);
-    REQUIRE((int)target[1] == 0);   // red
-    REQUIRE((int)target[2] == 255); // green
-    REQUIRE((int)target[3] == 0);   // blue
+    REQUIRE((int)target[0] == 0);   // red
+    REQUIRE((int)target[1] == 255); // green
+    REQUIRE((int)target[2] == 0);   // blue
 
     smce::convert_rgb444_to_rgb888(std::span{blue_bits, 2}, target);
-    REQUIRE((int)target[1] == 0);   // red
-    REQUIRE((int)target[2] == 0);   // green
-    REQUIRE((int)target[3] == 255); // blue
+    REQUIRE((int)target[0] == 0);   // red
+    REQUIRE((int)target[1] == 0);   // green
+    REQUIRE((int)target[2] == 255); // blue
 
     smce::convert_rgb444_to_rgb888(std::span{brown_bits, 2}, target);
-    REQUIRE((int)target[1] == 0x88); // red
-    REQUIRE((int)target[2] == 0x77); // green
-    REQUIRE((int)target[3] == 0x55); // blue
+    REQUIRE((int)target[0] == 0x88); // red
+    REQUIRE((int)target[1] == 0x77); // green
+    REQUIRE((int)target[2] == 0x55); // blue
 
     smce::convert_rgb444_to_rgb888(std::span{purple_bits, 2}, target);
-    REQUIRE((int)target[1] == 0xaa); // red
-    REQUIRE((int)target[2] == 0x55); // green
-    REQUIRE((int)target[3] == 0xcc); // blue
+    REQUIRE((int)target[0] == 0xaa); // red
+    REQUIRE((int)target[1] == 0x55); // green
+    REQUIRE((int)target[2] == 0xcc); // blue
 }
 
 // testing the RGB444 read function
 TEST_CASE("BoardView FrameBuffer RGB444 Read", "[BoardView]") {
     // set up
     std::byte target[2]; // target
-    std::byte black_bits[] = {(std::byte)0, (std::byte)0, (std::byte)0, (std::byte)0};
-    std::byte white_bits[] = {(std::byte)0, (std::byte)0xff, (std::byte)0xff, (std::byte)0xff};
-    std::byte red_bits[] = {(std::byte)0, (std::byte)0xff, (std::byte)0, (std::byte)0};
-    std::byte green_bits[] = {(std::byte)0, (std::byte)0, (std::byte)0xff, (std::byte)0};
-    std::byte blue_bits[] = {(std::byte)0, (std::byte)0x0, (std::byte)0, (std::byte)0xff};
-    std::byte brown_bits[] = {(std::byte)0, (std::byte)0x95, (std::byte)0x6c, (std::byte)0x32};
-    std::byte purple_bits[] = {(std::byte)0, (std::byte)0xa4, (std::byte)0x52, (std::byte)0xcd};
+    std::byte black_bits[] = {(std::byte)0, (std::byte)0, (std::byte)0};
+    std::byte white_bits[] = {(std::byte)0xff, (std::byte)0xff, (std::byte)0xff};
+    std::byte red_bits[] = {(std::byte)0xff, (std::byte)0, (std::byte)0};
+    std::byte green_bits[] = {(std::byte)0, (std::byte)0xff, (std::byte)0};
+    std::byte blue_bits[] = {(std::byte)0x0, (std::byte)0, (std::byte)0xff};
+    std::byte brown_bits[] = {(std::byte)0x95, (std::byte)0x6c, (std::byte)0x32};
+    std::byte purple_bits[] = {(std::byte)0xa4, (std::byte)0x52, (std::byte)0xcd};
 
     smce::convert_rgb888_to_rgb444(black_bits, target);
-    REQUIRE((int)target[0] == 0); // red
-    REQUIRE((int)target[1] == 0); // green and blue
+    REQUIRE((int)target[1] == 0); // red
+    REQUIRE((int)target[0] == 0); // green and blue
 
     smce::convert_rgb888_to_rgb444(white_bits, target);
-    REQUIRE((int)target[0] == 0x0f); // red
-    REQUIRE((int)target[1] == 0xff); // green and blue
+    REQUIRE((int)target[1] == 0x0f); // red
+    REQUIRE((int)target[0] == 0xff); // green and blue
 
     smce::convert_rgb888_to_rgb444(red_bits, target);
-    REQUIRE((int)target[0] == 0x0f); // red
-    REQUIRE((int)target[1] == 0);    // green and blue
+    REQUIRE((int)target[1] == 0x0f); // red
+    REQUIRE((int)target[0] == 0);    // green and blue
 
     smce::convert_rgb888_to_rgb444(green_bits, target);
-    REQUIRE((int)target[0] == 0);    // red
-    REQUIRE((int)target[1] == 0xf0); // green and blue
+    REQUIRE((int)target[1] == 0);    // red
+    REQUIRE((int)target[0] == 0xf0); // green and blue
 
     smce::convert_rgb888_to_rgb444(blue_bits, target);
-    REQUIRE((int)target[0] == 0);    // red
-    REQUIRE((int)target[1] == 0x0f); // green and blue
+    REQUIRE((int)target[1] == 0);    // red
+    REQUIRE((int)target[0] == 0x0f); // green and blue
 
     smce::convert_rgb888_to_rgb444(brown_bits, target);
-    REQUIRE((int)target[0] == 0x9);  // red
-    REQUIRE((int)target[1] == 0x63); // green and blue
+    REQUIRE((int)target[1] == 0x9);  // red
+    REQUIRE((int)target[0] == 0x63); // green and blue
 
     smce::convert_rgb888_to_rgb444(purple_bits, target);
-    REQUIRE((int)target[0] == 0xa);  // red
-    REQUIRE((int)target[1] == 0x5c); // green and blue
+    REQUIRE((int)target[1] == 0xa);  // red
+    REQUIRE((int)target[0] == 0x5c); // green and blue
 }
 
 // testing the RGB565 read function
 TEST_CASE("BoardView FrameBuffer RGB565 Read", "[BoardView]") {
     // set up
     std::byte target[2]; // target
-    std::byte black_bits[] = {(std::byte)0, (std::byte)0, (std::byte)0, (std::byte)0};
-    std::byte white_bits[] = {(std::byte)0, (std::byte)0xff, (std::byte)0xff, (std::byte)0xff};
-    std::byte red_bits[] = {(std::byte)0, (std::byte)0xff, (std::byte)0, (std::byte)0};
-    std::byte green_bits[] = {(std::byte)0, (std::byte)0, (std::byte)0xff, (std::byte)0};
-    std::byte blue_bits[] = {(std::byte)0, (std::byte)0x0, (std::byte)0, (std::byte)0xff};
-    std::byte brown_bits[] = {(std::byte)0, (std::byte)0x95, (std::byte)0x6c, (std::byte)0x32};
-    std::byte purple_bits[] = {(std::byte)0, (std::byte)0xa4, (std::byte)0x52, (std::byte)0xcd};
+    std::byte black_bits[] = {(std::byte)0, (std::byte)0, (std::byte)0};
+    std::byte white_bits[] = {(std::byte)0xff, (std::byte)0xff, (std::byte)0xff};
+    std::byte red_bits[] = {(std::byte)0xff, (std::byte)0, (std::byte)0};
+    std::byte green_bits[] = {(std::byte)0, (std::byte)0xff, (std::byte)0};
+    std::byte blue_bits[] = {(std::byte)0x0, (std::byte)0, (std::byte)0xff};
+    std::byte brown_bits[] = {(std::byte)0x95, (std::byte)0x6c, (std::byte)0x32};
+    std::byte purple_bits[] = {(std::byte)0xa4, (std::byte)0x52, (std::byte)0xcd};
 
     smce::convert_rgb888_to_rgb565(black_bits, target);
-    REQUIRE((int)target[0] == 0); // red
-    REQUIRE((int)target[1] == 0); // green and blue
+    REQUIRE((int)target[1] == 0); // red
+    REQUIRE((int)target[0] == 0); // green and blue
 
     smce::convert_rgb888_to_rgb565(white_bits, target);
-    REQUIRE((int)target[0] == 0xff); // red
-    REQUIRE((int)target[1] == 0xff); // green and blue
+    REQUIRE((int)target[1] == 0xff); // red
+    REQUIRE((int)target[0] == 0xff); // green and blue
 
     smce::convert_rgb888_to_rgb565(red_bits, target);
-    REQUIRE((int)target[0] == 0xf8); // red
-    REQUIRE((int)target[1] == 0);    // green and blue
+    REQUIRE((int)target[1] == 0xf8); // red
+    REQUIRE((int)target[0] == 0);    // green and blue
 
     smce::convert_rgb888_to_rgb565(green_bits, target);
-    REQUIRE((int)target[0] == 0x07); // red
-    REQUIRE((int)target[1] == 0xe0); // green and blue
+    REQUIRE((int)target[1] == 0x07); // red
+    REQUIRE((int)target[0] == 0xe0); // green and blue
 
     smce::convert_rgb888_to_rgb565(blue_bits, target);
-    REQUIRE((int)target[0] == 0);    // red
-    REQUIRE((int)target[1] == 0x1f); // green and blue
+    REQUIRE((int)target[1] == 0);    // red
+    REQUIRE((int)target[0] == 0x1f); // green and blue
 
     smce::convert_rgb888_to_rgb565(brown_bits, target);
-    REQUIRE((int)target[0] == 0x93); // red
-    REQUIRE((int)target[1] == 0x66); // green and blue
+    REQUIRE((int)target[1] == 0x93); // red
+    REQUIRE((int)target[0] == 0x66); // green and blue
 
     smce::convert_rgb888_to_rgb565(purple_bits, target);
-    REQUIRE((int)target[0] == 0xa2); // red
-    REQUIRE((int)target[1] == 0x99); // green and blue
+    REQUIRE((int)target[1] == 0xa2); // red
+    REQUIRE((int)target[0] == 0x99); // green and blue
 }
 
 // testing the RGB565 write function
 TEST_CASE("BoardView FrameBuffer RGB565 Write", "[BoardView]") {
     // set up
-    std::byte target[4];
+    std::byte target[3];
     std::byte black_bits[] = {(std::byte)0, (std::byte)0};
     std::byte white_bits[] = {(std::byte)0xff, (std::byte)0xff};
-    std::byte red_bits[] = {(std::byte)0xf8, (std::byte)0x00};
-    std::byte green_bits[] = {(std::byte)0x07, (std::byte)0xe0};
-    std::byte blue_bits[] = {(std::byte)0, (std::byte)0x1f};
-    std::byte brown_bits[] = {(std::byte)0x93, (std::byte)0x66};
-    std::byte purple_bits[] = {(std::byte)0xa2, (std::byte)0x99};
+    std::byte red_bits[] = {(std::byte)0x00, (std::byte)0xf8};
+    std::byte green_bits[] = {(std::byte)0xe0, (std::byte)0x07};
+    std::byte blue_bits[] = {(std::byte)0x1f, (std::byte)0};
+    std::byte brown_bits[] = {(std::byte)0x66, (std::byte)0x93};
+    std::byte purple_bits[] = {(std::byte)0x99, (std::byte)0xa2};
 
     smce::convert_rgb565_to_rgb888(std::span{black_bits, 2}, target);
-    REQUIRE((int)target[1] == 0); // red
-    REQUIRE((int)target[2] == 0); // green
-    REQUIRE((int)target[3] == 0); // blue
+    REQUIRE((int)target[0] == 0); // red
+    REQUIRE((int)target[1] == 0); // green
+    REQUIRE((int)target[2] == 0); // blue
 
     smce::convert_rgb565_to_rgb888(std::span{white_bits, 2}, target);
-    REQUIRE((int)target[1] == 255); // red
-    REQUIRE((int)target[2] == 255); // green
-    REQUIRE((int)target[3] == 255); // blue
+    REQUIRE((int)target[0] == 255); // red
+    REQUIRE((int)target[1] == 255); // green
+    REQUIRE((int)target[2] == 255); // blue
 
     smce::convert_rgb565_to_rgb888(std::span{red_bits, 2}, target);
-    REQUIRE((int)target[1] == 255); // red
-    REQUIRE((int)target[2] == 0);   // green
-    REQUIRE((int)target[3] == 0);   // blue
+    REQUIRE((int)target[0] == 255); // red
+    REQUIRE((int)target[1] == 0);   // green
+    REQUIRE((int)target[2] == 0);   // blue
 
     smce::convert_rgb565_to_rgb888(std::span{green_bits, 2}, target);
-    REQUIRE((int)target[1] == 0);   // red
-    REQUIRE((int)target[2] == 255); // green
-    REQUIRE((int)target[3] == 0);   // blue
+    REQUIRE((int)target[0] == 0);   // red
+    REQUIRE((int)target[1] == 255); // green
+    REQUIRE((int)target[2] == 0);   // blue
 
     smce::convert_rgb565_to_rgb888(std::span{blue_bits, 2}, target);
-    REQUIRE((int)target[1] == 0);   // red
-    REQUIRE((int)target[2] == 0);   // green
-    REQUIRE((int)target[3] == 255); // blue
+    REQUIRE((int)target[0] == 0);   // red
+    REQUIRE((int)target[1] == 0);   // green
+    REQUIRE((int)target[2] == 255); // blue
 
     smce::convert_rgb565_to_rgb888(std::span{brown_bits, 2}, target);
-    REQUIRE((int)target[1] == 0x94); // red
-    REQUIRE((int)target[2] == 0x6d); // green
-    REQUIRE((int)target[3] == 0x31); // blue
+    REQUIRE((int)target[0] == 0x94); // red
+    REQUIRE((int)target[1] == 0x6d); // green
+    REQUIRE((int)target[2] == 0x31); // blue
 
     smce::convert_rgb565_to_rgb888(std::span{purple_bits, 2}, target);
-    REQUIRE((int)target[1] == 0xa5); // red
-    REQUIRE((int)target[2] == 0x51); // green
-    REQUIRE((int)target[3] == 0xce); // blue
+    REQUIRE((int)target[0] == 0xa5); // red
+    REQUIRE((int)target[1] == 0x51); // green
+    REQUIRE((int)target[2] == 0xce); // blue
 }

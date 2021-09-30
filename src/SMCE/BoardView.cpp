@@ -298,12 +298,16 @@ bool FrameBuffer::read_rgb888(std::span<std::byte> buf) {
     return true;
 }
 
+// convert 2bytes into 3bytes
 void convert_rgb444_to_rgb888(std::span<const std::byte> source, std::byte* target) {
-    // for each byte in the input, write two bytes to the buffer
-    for (std::byte from : source) {
-        // duplicate each 4 bits
-        *target++ = (from & (std::byte)0b11110000) | (from >> 4);
-        *target++ = (from << 4) | (from & (std::byte)0b00001111);
+    // for each 2 bytes in the input write 3 bytes to the output
+    for (auto i = source.begin(); i != source.end(); ++i) {
+        std::byte left = *i++;
+        std::byte right = *i;
+
+        *target++ = (right << 4) | (right & (std::byte)0b00001111); // red
+        *target++ = (left & (std::byte)0b11110000) | (left >> 4);   // green
+        *target++ = (left << 4) | (left & (std::byte)0b00001111);   // blue
     }
 }
 
@@ -314,7 +318,7 @@ bool FrameBuffer::write_rgb444(std::span<const std::byte> source) {
         return false;
 
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (source.size() != frame_buf.data.size() / 2)
+    if (source.size() != frame_buf.data.size() / 3 * 2)
         return false;
 
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
@@ -325,12 +329,20 @@ bool FrameBuffer::write_rgb444(std::span<const std::byte> source) {
     return true;
 }
 
+// convert 3 bytes into 2 bytes
 void convert_rgb888_to_rgb444(const std::byte* source, std::span<std::byte> target) {
 
-    for (std::byte& to : target) {
-        // red, green and blue
-        to = (source[0] & std::byte{0xF0}) | (source[1] >> 4);
-        source += 2;
+    for (auto i = target.begin(); i != target.end(); ++i) {
+        // read red/green/blue
+
+        // pick values from the 24bits from frame buffer
+        std::byte red = *source++;
+        std::byte green = *source++;
+        std::byte blue = *source++;
+
+        // write to the target
+        *i++ = (green & (std::byte)0b11110000) | ((blue & (std::byte)0b11110000) >> 4);
+        *i = (red >> 4);
     }
 }
 // read from the frame buffer (rgb888) into the buf (rgb444)
@@ -339,7 +351,7 @@ bool FrameBuffer::read_rgb444(std::span<std::byte> target) {
         return false;
 
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (target.size() != frame_buf.data.size() / 2) // buf is 1/2 of frame buf
+    if (target.size() != frame_buf.data.size() / 3 * 2)
         return false;
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
 
@@ -353,12 +365,10 @@ void convert_rgb565_to_rgb888(std::span<const std::byte> source, std::byte* targ
     for (auto i = source.begin(); i != source.end(); ++i) {
         std::byte left = *i++;
         std::byte right = *i;
-
-        *target++ = (std::byte)0;                                 // unused
-        *target++ = (left & (std::byte)0b11111000) | (left >> 5); // red
-        *target++ = ((left & (std::byte)0b00000111) << 5) | ((right & (std::byte)0b11100000) >> 3) |
-                    ((left & (std::byte)0b00000110) >> 1);              // green
-        *target++ = (right << 3) | ((right & (std::byte)0b11100) >> 2); // blue
+        *target++ = (right & (std::byte)0b11111000) | (right >> 5); // red
+        *target++ = ((right & (std::byte)0b00000111) << 5) | ((left & (std::byte)0b11100000) >> 3) |
+                    ((right & (std::byte)0b00000110) >> 1);           // green
+        *target++ = (left << 3) | ((left & (std::byte)0b11100) >> 2); // blue
     }
 }
 // Implementation of rgb565. conversion from RGB888 to RGB565
@@ -384,16 +394,15 @@ void convert_rgb888_to_rgb565(const std::byte* source, std::span<std::byte> targ
     // read two bytes at the time
     for (auto i = target.begin(); i != target.end(); ++i) {
         // read red/green/blue
-        ++source; // skip unused byte
 
-        // pick values from the 32bits from frame buffer
+        // pick values from the 24bits from frame buffer
         std::byte red = *source++;
         std::byte green = *source++;
         std::byte blue = *source++;
 
         // write to the target
-        *i++ = (red & (std::byte)0b11111000) | ((green & (std::byte)0b11100000) >> 5);
-        *i = ((green & (std::byte)0b00011100) << 3) | ((blue & (std::byte)0b11111000) >> 3);
+        *i++ = ((green & (std::byte)0b00011100) << 3) | ((blue & (std::byte)0b11111000) >> 3);
+        *i = (red & (std::byte)0b11111000) | ((green & (std::byte)0b11100000) >> 5);
     }
 }
 
