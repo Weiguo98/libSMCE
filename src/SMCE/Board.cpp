@@ -17,6 +17,7 @@
  */
 
 #include <SMCE/Board.hpp>
+#include <SMCE/internal/BoardDeviceSpecification.hpp>
 #include <boost/predef.h>
 
 #if BOOST_OS_UNIX || BOOST_OS_MACOS
@@ -58,15 +59,6 @@ namespace bp = boost::process;
 namespace bip = boost::interprocess;
 
 namespace smce {
-
-// clang-format off
-enum class Board::Command {
-    run,      // <==>
-    stop,     // ==>
-    suspend,  // ==>
-    stop_ack, // <==
-};
-// clang-format on
 
 struct SMCE_INTERNAL Board::Internal {
     Uuid uuid = Uuid::generate();
@@ -143,6 +135,13 @@ bool Board::start() noexcept {
         return false;
     if (!m_sketch_ptr || !m_sketch_ptr->is_compiled())
         return false;
+
+    for (const auto& skdev : m_sketch_ptr->m_conf.genbind_devices) {
+        if (std::find_if(m_conf_opt->board_devices.cbegin(), m_conf_opt->board_devices.cend(), [&](const auto& e) {
+                return e.spec.get().full_string == skdev.get().full_string;
+            }) == m_conf_opt->board_devices.cend())
+            return false;
+    }
 
     do_spawn();
 
