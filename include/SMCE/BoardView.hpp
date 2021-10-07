@@ -213,13 +213,18 @@ class SMCE_API FrameBuffer {
     bool write_rgb565(std::span<const std::byte>);
     /// Copies a frame into an RGB565 buffer
     bool read_rgb565(std::span<std::byte>);
+
+    bool read_yuv422(std::span<std::byte>);
+    bool write_yuv422(std::span<const std::byte>);
 };
 
 // helper function
 SMCE_API void convert_rgb444_to_rgb888(std::span<const std::byte>, std::byte*);
 SMCE_API void convert_rgb565_to_rgb888(std::span<const std::byte>, std::byte*);
+SMCE_API void convert_yuv422_to_rgb888(std::span<const std::byte>, std::byte*);
 SMCE_API void convert_rgb888_to_rgb444(const std::byte*, std::span<std::byte>);
 SMCE_API void convert_rgb888_to_rgb565(const std::byte*, std::span<std::byte>);
+SMCE_API void convert_rgb888_to_uyv422(const std::byte*, std::span<std::byte>);
 
 class SMCE_API FrameBuffers {
     friend BoardView;

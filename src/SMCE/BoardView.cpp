@@ -406,6 +406,13 @@ void convert_rgb888_to_rgb565(const std::byte* source, std::span<std::byte> targ
     }
 }
 
+void convert_rgb888_to_yuv422([[maybe_unused]] const std::byte* source, [[maybe_unused]] std::span<std::byte> target) {
+    // TODO
+}
+void convert_yuv422_to_rgb888([[maybe_unused]] std::span<const std::byte> source, [[maybe_unused]] std::byte* target) {
+    // TODO
+}
+
 // read from the frame buffer (rgb888) into the buf (rg565)
 bool FrameBuffer::read_rgb565(std::span<std::byte> target) {
     if (!exists())
@@ -419,6 +426,40 @@ bool FrameBuffer::read_rgb565(std::span<std::byte> target) {
     const auto* source = frame_buf.data.data();
     convert_rgb888_to_rgb565(source, target);
 
+    return true;
+}
+
+// YUV format
+bool FrameBuffer::read_yuv422(std::span<std::byte> target) {
+    if (!exists())
+        return false;
+
+    auto& frame_buf = m_bdat->frame_buffers[m_idx];
+    if (target.size() != frame_buf.data.size())
+        return false;
+    [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
+
+    const auto* source = frame_buf.data.data();
+    convert_rgb888_to_yuv422(source, target);
+
+    return true;
+}
+
+bool FrameBuffer::write_yuv422(std::span<const std::byte> source) {
+    if (!exists())
+        return false;
+
+    auto& frame_buf = m_bdat->frame_buffers[m_idx];
+    if (source.size() != frame_buf.data.size() / 2)
+        return false;
+
+    [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
+
+    // Unsure what this does, will try to remove it if it does not work.
+    auto* target = frame_buf.data.data();
+
+    // Example used to convert to rgb565 http://www.barth-dev.de/about-rgb565-and-how-to-convert-into-it/#
+    convert_yuv422_to_rgb888(source, target);
     return true;
 }
 
