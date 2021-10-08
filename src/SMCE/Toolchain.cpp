@@ -33,6 +33,18 @@
 #include <SMCE/internal/BoardDeviceSpecification.hpp>
 #include <SMCE/internal/utils.hpp>
 
+
+
+//TODO: Include curl in CMake configuration
+#include <curl/curl.h>
+#include <curl/easy.h>
+#include <sstream>
+#include <iostream>
+#include <cstring>
+
+
+
+
 using namespace std::literals;
 
 namespace bp = boost::process;
@@ -243,6 +255,82 @@ std::error_code Toolchain::do_build(Sketch& sketch) noexcept {
     return {};
 }
 
+
+
+
+
+
+
+
+
+std::string getOsName()
+{
+    #ifdef _WIN32
+    return "Windows 32-bit";
+    #elif _WIN64
+    return "Windows 64-bit";
+    #elif __APPLE__ || __MACH__
+    return "Mac OSX";
+    #elif __linux__
+    return "Linux";
+    #elif __FreeBSD__
+    return "FreeBSD";
+    #elif __unix || __unix__
+    return "Unix";
+    #else
+    return "Other";
+    #endif
+}
+
+struct osi {
+    std::string zip = ".zip";
+    std::string front_url = "https://github.com/Kitware/CMake/releases/download/v3.21.3/";
+
+    std::string windows = "cmake-3.21.3-windows-x86_64";
+    std::string linux = "cmake-3.21.3-linux-x86_64.tar.gz";
+    std::string macos = "cmake-3.21.3-macos-universal.tar.gz";
+} OSI;
+
+size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    size_t written;
+    written = fwrite(ptr, size, nmemb, stream);
+    return written;
+}
+
+int download_cmake() {
+    std::cout << getOsName() << std::endl;
+
+    char outfilename[FILENAME_MAX] = "C:\\cmake.zip"; //TODO: Find current location, instead of C:
+    CURL *curl = curl_easy_init();
+    FILE *fp = fopen(outfilename,"wb");
+    
+    std::string url = OSI.front_url + OSI.windows + OSI.zip;
+    int n = url.length();
+    //char char_array[n + 1];
+    char char_array[200];
+    strcpy(char_array, url.c_str());
+
+    curl_easy_setopt(curl, CURLOPT_URL, char_array);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
+    curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "deflate");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+    curl_easy_perform(curl);
+    fclose(fp);
+
+    system("unzip C:/cmake.zip"); //TODO: Find current location,  instead of C:
+
+    return 0;
+}
+
+
+
+
+
+
+
+
 [[nodiscard]] std::error_code Toolchain::check_suitable_environment() noexcept {
     if (std::error_code ec; !stdfs::exists(m_res_dir, ec))
         return toolchain_error::resdir_absent;
@@ -266,17 +354,20 @@ std::error_code Toolchain::do_build(Sketch& sketch) noexcept {
             return ec;
     } else {
         m_cmake_path = bp::search_path(m_cmake_path).string();
-        if (m_cmake_path.empty())
-            return toolchain_error::cmake_not_found;
+        if (m_cmake_path.empty()) {
+            download_cmake();
+        }
+        //return toolchain_error::cmake_not_found;
     }
     bp::ipstream cmake_out;
     // clang-format off
     bp::child cmake_child{
-        m_cmake_path,
-        "--version",
+        m_cmake_path, //cmake
+        "--version", //--version
         bp::std_out > cmake_out
 #if BOOST_OS_WINDOWS
         , bp::windows::create_no_window
+        
 #endif
     };
     // clang-format on
@@ -295,6 +386,11 @@ std::error_code Toolchain::do_build(Sketch& sketch) noexcept {
 
     return {};
 }
+
+
+
+
+
 
 std::error_code Toolchain::compile(Sketch& sketch) noexcept {
     sketch.m_built = false;
