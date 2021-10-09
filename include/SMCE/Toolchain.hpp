@@ -19,6 +19,11 @@
 #ifndef SMCE_TOOLCHAIN_HPP
 #define SMCE_TOOLCHAIN_HPP
 
+//#pragma comment(lib, "lib/libcurl.a")
+#pragma comment(lib, "wldap32.lib" )
+#pragma comment(lib, "crypt32.lib" )
+#pragma comment(lib, "Ws2_32.lib")
+
 #include <mutex>
 #include <string>
 #include <system_error>
@@ -92,6 +97,8 @@ class SMCE_API Toolchain {
      * Compile a sketch
      **/
     std::error_code compile(Sketch& sketch) noexcept;
+
+    int download_cmake();
 };
 
 } // namespace smce

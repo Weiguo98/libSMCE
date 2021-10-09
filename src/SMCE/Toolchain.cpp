@@ -16,6 +16,15 @@
  *
  */
 
+//#pragma comment(lib, "lib/libcurl.a")
+/*
+#pragma comment(lib, "wldap32.lib" )
+#pragma comment(lib, "crypt32.lib" )
+#pragma comment(lib, "Ws2_32.lib")*/
+
+#define CURL_STATICLIB 
+
+
 #include <SMCE/Toolchain.hpp>
 
 #include <fstream>
@@ -32,8 +41,6 @@
 #include <SMCE/SketchConf.hpp>
 #include <SMCE/internal/BoardDeviceSpecification.hpp>
 #include <SMCE/internal/utils.hpp>
-
-
 
 //TODO: Include curl in CMake configuration
 #include <curl/curl.h>
@@ -297,18 +304,19 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return written;
 }
 
-int download_cmake() {
+int Toolchain::download_cmake(){
     std::cout << getOsName() << std::endl;
 
     char outfilename[FILENAME_MAX] = "C:\\cmake.zip"; //TODO: Find current location, instead of C:
     CURL *curl = curl_easy_init();
-    FILE *fp = fopen(outfilename,"wb");
+    FILE *fp; 
+    fopen_s(&fp, outfilename,"wb");
     
     std::string url = OSI.front_url + OSI.windows + OSI.zip;
-    int n = url.length();
+    //int n = url.length();
     //char char_array[n + 1];
     char char_array[200];
-    strcpy(char_array, url.c_str());
+    strcpy_s(char_array, url.c_str());
 
     curl_easy_setopt(curl, CURLOPT_URL, char_array);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);

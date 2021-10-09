@@ -41,7 +41,7 @@ set_property (TARGET Ardrivo PROPERTY IMPORTED_IMPLIB "${SMCE_DIR}/RtResources/A
 if (MSVC)
   target_compile_options (Ardrivo INTERFACE "/permissive-" "/W4" "/w34265" "/w44289" "/w44296" "/w14545" "/w14546" "/w14547" "/w14548" "/w14549" "/w14555" "/w44574" "/w44582" "/w44583" "/w34619" "/w44749" "/w44777" "/w44837" "/w44841" "/w44842" "/w14928" "/w14946" "/w44986" "/w44987" "/w45022" "/w45023" "/w45029" "/w45038" "/wd4250")
 else ()
-  target_compile_options (Ardrivo INTERFACE "-Wpedantic" "-Wall" "-Wextra" "-Wnon-virtual-dtor" "-Wold-style-cast" "-Wcast-align" "-Woverloaded-virtual" "-Wnull-dereference")
+  target_compile_options (Ardrivo INTERFACE "-lcurl" "-Wpedantic" "-Wall" "-Wextra" "-Wnon-virtual-dtor" "-Wold-style-cast" "-Wcast-align" "-Woverloaded-virtual" "-Wnull-dereference")
 endif ()
 
 if (WIN32)
@@ -64,3 +64,5 @@ if (NOT DEFINED ENV{SMCE_LEGACY_PREPROCESSING} OR NOT "$ENV{SMCE_LEGACY_PREPROCE
   include (Preprocessing)
 endif ()
 target_sources (Sketch PRIVATE "${PROJECT_SOURCE_DIR}/sketch.cpp")
+
+add_executable(app C:/Users/Clementine Jensen/Documents/curl-7.79.1-win64-mingw/curl-7.79.1-win64-mingw/lib)
