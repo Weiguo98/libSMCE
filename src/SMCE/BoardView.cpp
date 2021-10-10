@@ -406,13 +406,6 @@ void convert_rgb888_to_rgb565(const std::byte* source, std::span<std::byte> targ
     }
 }
 
-void convert_rgb888_to_yuv422([[maybe_unused]] const std::byte* source, [[maybe_unused]] std::span<std::byte> target) {
-    // TODO
-}
-void convert_yuv422_to_rgb888([[maybe_unused]] std::span<const std::byte> source, [[maybe_unused]] std::byte* target) {
-    // TODO
-}
-
 // read from the frame buffer (rgb888) into the buf (rg565)
 bool FrameBuffer::read_rgb565(std::span<std::byte> target) {
     if (!exists())
@@ -429,13 +422,76 @@ bool FrameBuffer::read_rgb565(std::span<std::byte> target) {
     return true;
 }
 
+void convert_rgb888_to_yuv422([[maybe_unused]] const std::byte* source, [[maybe_unused]] std::span<std::byte> target) {
+    // TODO
+    // https://en.wikipedia.org/wiki/YUV#Y%E2%80%B2UV422_to_RGB888_conversion
+    // read two pixels at the time
+    for (auto i = target.begin(); i != target.end();) {
+        // read red/green/blue
+
+        // pick values from the 24bits from frame buffer
+        std::byte r1 = *source++;
+        std::byte g1 = *source++;
+        std::byte b1 = *source++;
+
+        std::byte r2 = *source++;
+        std::byte g2 = *source++;
+        std::byte b2 = *source++;
+
+        double y1 = 0.299 * (double)r1 + 0.587 * (double)g1 + 0.114 * (double)b1;
+        double u1 = -0.169 * (double)r1 - 0.331 * (double)g1 + 0.499 * (double)b1 + 128;
+        double v1 = 0.499 * (double)r1 - 0.418 * (double)g1 - 0.0813 * (double)b1 + 128;
+
+        double y2 = 0.299 * (double)r2 + 0.587 * (double)g2 + 0.114 * (double)b2;
+        double u2 = -0.169 * (double)r2 - 0.331 * (double)g2 + 0.499 * (double)b2 + 128;
+        double v2 = 0.499 * (double)r2 - 0.418 * (double)g2 - 0.0813 * (double)b2 + 128;
+
+        double u = (u1 + u2) / 2;
+        double v = (v1 + v2) / 2;
+
+        // write to the target
+        *i++ = (std::byte)y1;
+        *i++ = (std::byte)u;
+        *i++ = (std::byte)y2;
+        *i++ = (std::byte)v;
+    }
+}
+void convert_yuv422_to_rgb888(std::span<const std::byte> source, std::byte* target) {
+    // read four bytes at the time
+    for (auto i = source.begin(); i != source.end();) {
+        std::byte y1 = *i++;
+        std::byte u = *i++;
+        std::byte y2 = *i++;
+        std::byte v = *i++;
+
+        // Convert YUV to RGB of pixel 1
+        double r1 = (double)y1 + 1.402 * ((double)v - 128);
+        double g1 = (double)y1 - 0.344 * ((double)u - 128) - 0.714 * ((double)v - 128);
+        double b1 = (double)y1 + 1.772 * ((double)u - 128);
+
+        // Convert YUV to RGB of pixel 2
+        double r2 = (double)y2 + 1.402 * ((double)v - 128);
+        double g2 = (double)y2 - 0.344 * ((double)u - 128) - 0.714 * ((double)v - 128);
+        double b2 = (double)y2 + 1.772 * ((double)u - 128);
+
+        // Write R, G, B for pixel 1
+        *target++ = (std::byte)std::clamp(r1, 0.0, 255.0);
+        *target++ = (std::byte)std::clamp(g1, 0.0, 255.0);
+        *target++ = (std::byte)std::clamp(b1, 0.0, 255.0);
+        // Write R, G, B for pixel 2
+        *target++ = (std::byte)std::clamp(r2, 0.0, 255.0);
+        *target++ = (std::byte)std::clamp(g2, 0.0, 255.0);
+        *target++ = (std::byte)std::clamp(b2, 0.0, 255.0);
+    }
+}
+
 // YUV format
 bool FrameBuffer::read_yuv422(std::span<std::byte> target) {
     if (!exists())
         return false;
 
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (target.size() != frame_buf.data.size())
+    if (target.size() != frame_buf.data.size() / 6 * 4)
         return false;
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
 
@@ -445,12 +501,15 @@ bool FrameBuffer::read_yuv422(std::span<std::byte> target) {
     return true;
 }
 
+// RGB888: R1 G1 B1 R2 G2 B2
+// YUV422: Y1 U  Y2 V
+
 bool FrameBuffer::write_yuv422(std::span<const std::byte> source) {
     if (!exists())
         return false;
 
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (source.size() != frame_buf.data.size() / 2)
+    if (source.size() != frame_buf.data.size() / 6 * 4)
         return false;
 
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};

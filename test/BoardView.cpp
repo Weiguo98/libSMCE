@@ -420,3 +420,40 @@ TEST_CASE("BoardView RGB444 cvt", "[BoardView]") {
 
     REQUIRE(br.stop());
 }
+
+TEST_CASE("BoardView YUV422 cvt", "[BoardView]") {
+    smce::Toolchain tc{SMCE_PATH};
+    REQUIRE(!tc.check_suitable_environment());
+    smce::Sketch sk{SKETCHES_PATH "noop", {.fqbn = "arduino:avr:nano"}};
+    const auto ec = tc.compile(sk);
+    if (ec)
+        std::cerr << tc.build_log().second;
+    REQUIRE_FALSE(ec);
+    smce::Board br{};
+    REQUIRE(br.configure({.frame_buffers = {{}}}));
+    REQUIRE(br.attach_sketch(sk));
+    REQUIRE(br.start());
+    auto bv = br.view();
+    REQUIRE(bv.valid());
+    REQUIRE(br.suspend());
+    auto fb = bv.frame_buffers[0];
+    REQUIRE(fb.exists());
+
+    {
+        constexpr std::size_t height = 1;
+        constexpr std::size_t width = 2;
+
+        constexpr std::array in = {39_b, 154_b, 133_b, 99_b};
+        constexpr std::array expected_out = {0_b, 50_b, 85_b, 92_b, 144_b, 179_b};
+
+        fb.set_height(height);
+        fb.set_width(width);
+        REQUIRE(fb.write_yuv422(in));
+
+        std::array<std::byte, std::size(expected_out)> out;
+        REQUIRE(fb.read_rgb888(out));
+        REQUIRE(out == expected_out);
+    }
+
+    REQUIRE(br.stop());
+}
