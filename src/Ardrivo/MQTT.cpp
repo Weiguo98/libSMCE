@@ -84,7 +84,7 @@ void MQTTClient::setWill(const char* topic, const char* payload, bool retained, 
 
 void MQTTClient::clearWill() { mosquitto_will_clear(static_cast<Mosquitto*>(m_client)); }
 
-bool MQTTClient::connect(const char* clientID, const char* username, const char* password, [[maybe_unused]] bool skip) {
+bool MQTTClient::connect(const char* clientID, const char* username, const char* password) {
     if (this->connected())
         this->disconnect();
 
