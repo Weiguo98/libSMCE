@@ -80,12 +80,10 @@ int main(int argc, char** argv) {
 
     smce::Board board; // Create the virtual Arduino board
     board.attach_sketch(sketch);
-    // clang-format off
     board.configure({
         .uart_channels = { {} },
         .sd_cards = { smce::BoardConfig::SecureDigitalStorage{ .root_dir = "." } }
     });
-    // clang-format on
 
     // Power-on the board
     if (!board.start()) {
