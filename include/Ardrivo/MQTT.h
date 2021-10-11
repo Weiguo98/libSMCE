@@ -89,8 +89,6 @@ class SMCE__DLL_RT_API MQTTClient {
     void onMessage(MQTTClientCallbackSimpleFunction cb);
     void onMessageAdvanced(MQTTClientCallbackAdvancedFunction cb);
 
-    // void setClockSource(MQTTClientClockSource cb);
-
     inline void setHost(const char* hostname) { this->setHost(hostname, 1883); }
     void setHost(const char* hostname, std::uint16_t port);
     inline void setHost(IPAddress address) { this->setHost(address, 1883); }

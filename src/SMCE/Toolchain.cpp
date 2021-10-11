@@ -58,7 +58,7 @@ struct toolchain_error_category : public std::error_category {
         case toolchain_error::cmake_not_found:
             return "CMake not found in PATH";
         case toolchain_error::invalid_plugin_name:
-            return "Plugin name is \".\", \"..\", or contains a forward slash";
+            return R"(Plugin name is ".", "..", or contains a forward slash)";
         case toolchain_error::sketch_invalid:
             return "Sketch path is invalid";
         case toolchain_error::configure_failed:
