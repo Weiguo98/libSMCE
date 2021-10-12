@@ -89,8 +89,6 @@ class SMCE__DLL_RT_API MQTTClient {
     void onMessage(MQTTClientCallbackSimpleFunction cb);
     void onMessageAdvanced(MQTTClientCallbackAdvancedFunction cb);
 
-    // void setClockSource(MQTTClientClockSource cb);
-
     inline void setHost(const char* hostname) { this->setHost(hostname, 1883); }
     void setHost(const char* hostname, std::uint16_t port);
     inline void setHost(IPAddress address) { this->setHost(address, 1883); }
@@ -109,13 +107,13 @@ class SMCE__DLL_RT_API MQTTClient {
         this->setTimeout(_timeout);
     }
 
-    inline bool connect(const char* clientId, bool skip = false) {
-        return this->connect(clientId, nullptr, nullptr, skip);
+    inline bool connect(const char* clientId) {
+        return this->connect(clientId, nullptr, nullptr);
     }
-    inline bool connect(const char* clientId, const char* username, bool skip = false) {
-        return this->connect(clientId, username, nullptr, skip);
+    inline bool connect(const char* clientId, const char* username) {
+        return this->connect(clientId, username, nullptr);
     }
-    bool connect(const char* clientID, const char* username, const char* password, bool skip = false);
+    bool connect(const char* clientID, const char* username, const char* password);
 
     inline bool publish(const String& topic) { return this->publish(topic.c_str(), ""); }
     inline bool publish(const String& topic, const String& payload) {

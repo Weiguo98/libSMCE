@@ -40,6 +40,23 @@ void print_help(const char* argv0) {
     std::cout << "Usage: " << argv0 << " <fully-qualified-board-name> <path-to-sketch>" << std::endl;
 }
 
+void create_toolchain(smce::Toolchain toolchain){
+    if (const auto ec = toolchain.check_suitable_environment()) {
+        std::cerr << "Error: " << ec.message() << std::endl;
+        return EXIT_FAILURE;
+    }
+}
+
+void complie_sketch(smce::Toolchain toolchain,smce::Sketch sketch){
+    if (const auto ec = toolchain.compile(sketch)) {
+        std::cerr << "Error: " << ec.message() << std::endl;
+        auto [_, log] = toolchain.build_log();
+        if (!log.empty())
+            std::cerr << log << std::endl;
+        return EXIT_FAILURE;
+    }
+}
+
 int main(int argc, char** argv) {
     if (argc == 2 && (argv[1] == "-h"sv || argv[1] == "--help"sv)) {
         print_help(argv[0]);
@@ -49,40 +66,24 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    // Create the toolchain
     smce::Toolchain toolchain{SMCE_RESOURCES_DIR};
-    if (const auto ec = toolchain.check_suitable_environment()) {
-        std::cerr << "Error: " << ec.message() << std::endl;
-        return EXIT_FAILURE;
-    }
+    create_toolchain(toolchain);
 
-    // Create the sketch, and declare that it requires the WiFi and MQTT Arduino libraries during preprocessing
-    // clang-format off
     smce::Sketch sketch{argv[2], {
-          .fqbn = argv[1],
-          .legacy_preproc_libs = { {"WiFi"}, {"MQTT"} }
+         .fqbn = argv[1],
+         legacy_preproc_libs = { {"WiFi"}, {"MQTT"} }
     }};
-    // // clang-format on
 
     std::cout << "Compiling..." << std::endl;
-    // Compile the sketch on the toolchain
-    if (const auto ec = toolchain.compile(sketch)) {
-        std::cerr << "Error: " << ec.message() << std::endl;
-        auto [_, log] = toolchain.build_log();
-        if (!log.empty())
-            std::cerr << log << std::endl;
-        return EXIT_FAILURE;
-    }
+    complie_sketch(toolchain,sketch);
     std::cout << "Done" << std::endl;
 
     smce::Board board; // Create the virtual Arduino board
     board.attach_sketch(sketch);
-    // clang-format off
     board.configure({
         .uart_channels = { {} },
         .sd_cards = { smce::BoardConfig::SecureDigitalStorage{ .root_dir = "." } }
     });
-    // clang-format on
 
     // Power-on the board
     if (!board.start()) {
